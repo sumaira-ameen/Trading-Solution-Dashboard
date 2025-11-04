@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Solutions Dashboard (PKR)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons (for clean icons) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+        }
+
+        /* Custom scrollbar for a nicer look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-100">
+
+    <!-- Main Container -->
+    <div id="app" class="flex flex-col min-h-screen">
+
+        <!-- Header & Nav -->
+        <header class="bg-slate-900 shadow-lg border-b border-indigo-500/30">
+            <div
+                class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center">
+                <h1 class="text-2xl font-extrabold text-indigo-400">Trading Solutions Dashboard (Local Data)</h1>
+                <p id="user-info" class="text-xs mt-1 sm:mt-0 text-gray-400">Status: Local Storage Active | Currency:
+                    PKR</p>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+
+            <!-- Tab Navigation -->
+            <nav class="flex space-x-2 sm:space-x-4 border-b border-slate-700 mb-6">
+                <button data-tab="dashboard"
+                    class="tab-button py-2 px-3 sm:px-4 text-sm font-medium rounded-t-lg transition duration-200 bg-indigo-600 text-white shadow-md">
+                    <i data-lucide="layout-grid" class="w-4 h-4 inline-block mr-1"></i> Dashboard
+                </button>
+                <button data-tab="stock"
+                    class="tab-button py-2 px-3 sm:px-4 text-sm font-medium rounded-t-lg transition duration-200 text-gray-400 hover:text-white">
+                    <i data-lucide="package" class="w-4 h-4 inline-block mr-1"></i> Stock
+                </button>
+                <button data-tab="orders"
+                    class="tab-button py-2 px-3 sm:px-4 text-sm font-medium rounded-t-lg transition duration-200 text-gray-400 hover:text-white">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 inline-block mr-1"></i> Orders (New Sale)
+                </button>
+                <button data-tab="expenses"
+                    class="tab-button py-2 px-3 sm:px-4 text-sm font-medium rounded-t-lg transition duration-200 text-gray-400 hover:text-white">
+                    <i data-lucide="wallet" class="w-4 h-4 inline-block mr-1"></i> Expenses
+                </button>
+            </nav>
+
+            <!-- Loading Spinner (Kept for initial flicker control) -->
+            <div id="loading" class="text-center py-12 text-indigo-400 hidden">
+                <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="mt-2 text-sm">Loading Local Data...</p>
+            </div>
+
+            <!-- Tab Content (All content blocks start hidden) -->
+            <div id="tab-content" class="bg-slate-800 p-6 rounded-xl shadow-2xl min-h-[500px]">
+
+                <!-- 1. Dashboard Tab -->
+                <div id="dashboard" class="tab-page">
+                    <h2 class="text-3xl font-bold mb-6 text-indigo-400">Business Overview</h2>
+                    <div class="mb-6 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <label class="text-gray-300 whitespace-nowrap">Filter From:</label>
+                        <input type="date" id="date-start"
+                            class="p-2 rounded-lg bg-slate-700 border border-slate-600 text-white w-full sm:w-auto">
+                        <label class="text-gray-300 whitespace-nowrap">To:</label>
+                        <input type="date" id="date-end"
+                            class="p-2 rounded-lg bg-slate-700 border border-slate-600 text-white w-full sm:w-auto">
+                        <button id="apply-filter"
+                            class="w-full sm:w-auto px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-white font-semibold transition duration-200 shadow-md">Apply
+                            Filter</button>
+                    </div>
+
+                    <div id="performance-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Sales Card -->
+                        <div class="bg-slate-900 p-6 rounded-xl border border-indigo-500/40 shadow-xl">
+                            <i data-lucide="trending-up" class="w-8 h-8 text-green-400 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-400">Total Sales</p>
+                            <p id="total-sales" class="text-4xl font-extrabold text-white mt-1">0</p>
+                        </div>
+                        <!-- Expenses Card -->
+                        <div class="bg-slate-900 p-6 rounded-xl border border-rose-500/40 shadow-xl">
+                            <i data-lucide="trending-down" class="w-8 h-8 text-rose-400 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-400">Total Expenses</p>
+                            <p id="total-expenses" class="text-4xl font-extrabold text-white mt-1">0</p>
+                        </div>
+                        <!-- Profit Card -->
+                        <div class="bg-slate-900 p-6 rounded-xl border border-teal-500/40 shadow-xl">
+                            <i data-lucide="dollar-sign" class="w-8 h-8 text-teal-400 mb-2"></i>
+                            <p class="text-sm font-medium text-gray-400">Net Profit</p>
+                            <p id="net-profit" class="text-4xl font-extrabold text-white mt-1">0</p>
+                        </div>
+                    </div>
+
+                    <!-- New: Outstanding Credit Orders -->
+                    <h3 class="text-xl font-semibold mt-8 mb-4 border-b border-slate-700 pb-2 text-indigo-300">
+                        Outstanding Credit Orders</h3>
+                    <div id="credit-orders-summary"
+                        class="bg-slate-900 p-4 rounded-xl shadow-xl border border-slate-700">
+                        <div id="credit-orders-list" class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-700 rounded-lg overflow-hidden">
+                                <thead class="bg-slate-700">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                            Customer</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                            Amount (PKR)</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                            Due Date</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                            Days Left</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="credit-orders-table-body" class="bg-slate-800 divide-y divide-slate-700">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-gray-400">Loading credit orders...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <h3 class="text-xl font-semibold mt-8 mb-4 border-b border-slate-700 pb-2 text-indigo-300">Date-wise
+                        Performance</h3>
+                    <div id="date-wise-performance" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-700 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Sales (PKR)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Expenses (PKR)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Profit (PKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-table-body" class="bg-slate-800 divide-y divide-slate-700">
+                                <!-- Data rows inserted here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Stock Tab -->
+                <div id="stock" class="tab-page hidden">
+                    <h2 class="text-3xl font-bold mb-6 text-indigo-400">Product Stock Management</h2>
+
+                    <!-- Add Stock Item Form -->
+                    <div class="bg-slate-900 p-5 rounded-xl mb-6 shadow-xl border border-slate-700">
+                        <h3 class="text-xl font-semibold mb-3 text-indigo-300">Add New Product</h3>
+                        <form id="add-stock-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <input type="text" id="stock-id" placeholder="Product ID (SKU)" required
+                                class="col-span-1 p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="stock-name" placeholder="Product Name" required
+                                class="col-span-1 md:col-span-2 p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="stock-quantity" placeholder="Initial Qty" min="0" required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="stock-cost" placeholder="Unit Cost (PKR)" min="0" step="1" required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="submit"
+                                class="col-span-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200">Add
+                                Product</button>
+                        </form>
+                    </div>
+
+                    <!-- NEW: Update Stock Form -->
+                    <div class="bg-slate-900 p-5 rounded-xl mt-6 mb-6 shadow-xl border border-slate-700">
+                        <h3 class="text-xl font-semibold mb-3 text-green-300">Update Current Stock (Received Shipment)
+                        </h3>
+                        <form id="update-stock-form" onsubmit="updateCurrentStock(event)"
+                            class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <select id="update-stock-select" required
+                                class="md:col-span-2 p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">-- Select Product to Update --</option>
+                                <!-- Options populated by JS -->
+                            </select>
+                            <input type="number" id="update-stock-quantity" placeholder="Quantity Received" min="1"
+                                required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="submit"
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition duration-200">Receive
+                                Stock</button>
+                        </form>
+                    </div>
+
+                    <!-- Export Button -->
+                    <div class="flex justify-end mb-4">
+                        <button id="export-stock-btn"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold transition duration-200 flex items-center shadow-md">
+                            <i data-lucide="download" class="w-4 h-4 mr-1"></i> Export Stock (CSV)
+                        </button>
+                    </div>
+
+                    <!-- Stock List -->
+                    <h3 class="text-xl font-semibold mb-4 text-indigo-300">Current Inventory</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-700 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Product ID (SKU)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Product Name</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Qty</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Unit Cost (PKR)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-list-body" class="bg-slate-800 divide-y divide-slate-700">
+                                <!-- Stock items inserted here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Orders Tab (The Twicky Sheet) -->
+                <div id="orders" class="tab-page hidden">
+                    <h2 class="text-3xl font-bold mb-6 text-indigo-400">Record a New Sale (Twicky Sheet)</h2>
+
+                    <!-- Customer Details Form -->
+                    <div class="bg-slate-900 p-5 rounded-xl mb-6 shadow-xl border border-slate-700">
+                        <h3 class="text-xl font-semibold mb-3 text-indigo-300">Customer & Order Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <select id="customer-select"
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">-- Select Existing Customer --</option>
+                            </select>
+                            <input type="text" id="customer-name-input" placeholder="New Customer Name (Required)"
+                                required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <input type="text" id="customer-address" placeholder="Address"
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="customer-contact" placeholder="Contact Number"
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <select id="sale-channel"
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500"
+                                required>
+                                <option value="">-- Select Channel --</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Wholesale">Wholesale</option>
+                            </select>
+
+                            <div class="flex items-center space-x-4">
+                                <input type="checkbox" id="is-credit"
+                                    class="h-4 w-4 text-indigo-600 bg-slate-700 border-slate-600 rounded focus:ring-indigo-500">
+                                <label for="is-credit" class="text-gray-300 whitespace-nowrap">Sale on Credit?</label>
+                            </div>
+                        </div>
+                        <input type="date" id="due-date"
+                            class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500 w-full hidden">
+                    </div>
+
+                    <h3 class="text-xl font-semibold mb-3 text-indigo-300">Items Sold</h3>
+
+                    <div id="order-items-container" class="space-y-4 mb-6">
+                        <!-- Order item rows will be added here -->
+                    </div>
+
+                    <button id="add-order-item-btn"
+                        class="flex items-center text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition duration-200">
+                        <i data-lucide="plus-circle" class="w-4 h-4 mr-1"></i> Add Another Item
+                    </button>
+
+                    <div
+                        class="mt-6 pt-4 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center">
+                        <div class="text-2xl font-bold text-teal-400 mb-4 sm:mb-0">
+                            Total Sale: <span id="order-total">0</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button id="record-order-btn"
+                                class="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg text-white font-extrabold transition duration-200 shadow-lg">
+                                Record Sale & Update Stock
+                            </button>
+                            <button id="delete-order-btn"
+                                class="px-6 py-3 bg-rose-600 hover:bg-rose-700 rounded-lg text-white font-extrabold transition duration-200 shadow-lg">
+                                Delete Last Month's Orders
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Export and Return Buttons -->
+                    <div class="flex justify-end mt-8 mb-4">
+                        <button id="export-orders-btn"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold transition duration-200 flex items-center shadow-md">
+                            <i data-lucide="download" class="w-4 h-4 mr-1"></i> Export Orders (CSV)
+                        </button>
+                        <button id="open-return-modal-btn"
+                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded-lg text-white font-semibold transition duration-200 flex items-center shadow-md ml-4">
+                            <i data-lucide="undo-2" class="w-4 h-4 mr-1"></i> Record Return/Adjustment
+                        </button>
+                    </div>
+
+                    <!-- Past Orders List -->
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-indigo-300">Recent Sales History</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-700 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Order ID</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Customer</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Contact</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Total (PKR)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-list-body" class="bg-slate-800 divide-y divide-slate-700">
+                                <!-- Past orders inserted here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. Expenses Tab -->
+                <div id="expenses" class="tab-page hidden">
+                    <h2 class="text-3xl font-bold mb-6 text-indigo-400">Daily Expenses Log</h2>
+
+                    <!-- Add Expense Form -->
+                    <div class="bg-slate-900 p-5 rounded-xl mb-6 shadow-xl border border-slate-700">
+                        <h3 class="text-xl font-semibold mb-3 text-indigo-300">Add New Expense</h3>
+                        <form id="add-expense-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <input type="date" id="expense-date" required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="expense-amount" placeholder="Amount (PKR)" min="0" step="1"
+                                required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="expense-category" placeholder="Category (e.g., Rent, Marketing)"
+                                required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="submit"
+                                class="px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded-lg text-white font-semibold transition duration-200">Log
+                                Expense</button>
+                        </form>
+                    </div>
+
+                    <!-- Export Button -->
+                    <div class="flex justify-end mb-4">
+                        <button id="export-expenses-btn"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold transition duration-200 flex items-center shadow-md">
+                            <i data-lucide="download" class="w-4 h-4 mr-1"></i> Export Expenses (CSV)
+                        </button>
+                    </div>
+
+                    <!-- Expenses List -->
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-indigo-300">Recent Expenses</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-700 rounded-lg overflow-hidden">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Date</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Category</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Amount (PKR)</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-list-body" class="bg-slate-800 divide-y divide-slate-700">
+                                <!-- Expense rows inserted here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Modal -->
+            <div id="message-modal"
+                class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+                <div class="bg-slate-900 p-6 rounded-xl shadow-2xl max-w-sm w-full border-t-4 border-indigo-500">
+                    <p id="modal-message" class="text-white text-lg font-semibold mb-4"></p>
+                    <button
+                        onclick="document.getElementById('message-modal').classList.add('hidden'); document.getElementById('message-modal').classList.remove('flex');"
+                        class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold">Close</button>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <!-- Confirmation Modal -->
+            <div id="confirmation-modal"
+                class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+                <div class="bg-slate-900 p-6 rounded-xl shadow-2xl max-w-sm w-full border-t-4 border-amber-500">
+                    <div class="flex items-center mb-4">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-amber-400 mr-3"></i>
+                        <h3 class="text-xl font-bold text-amber-400">Confirm Action</h3>
+                    </div>
+                    <p id="confirmation-message" class="text-white text-lg mb-6">Are you sure you want to delete all
+                        last month's orders? This action cannot be undone.</p>
+                    <div class="flex space-x-3">
+                        <button id="confirm-yes"
+                            class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 rounded-lg text-white font-semibold transition duration-200">
+                            Yes, Delete
+                        </button>
+                        <button id="confirm-no"
+                            class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-gray-300 font-semibold transition duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Modal -->
+            <div id="return-modal"
+                class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center p-4 z-50">
+                <div class="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-lg w-full border-t-4 border-rose-500">
+                    <h3 class="text-2xl font-bold text-rose-400 mb-6">Record Order Return/Adjustment</h3>
+
+                    <form id="return-form">
+                        <div class="mb-4">
+                            <label for="return-order-id" class="block text-sm font-medium text-gray-300 mb-1">Enter
+                                Order ID to Return</label>
+                            <input type="text" id="return-order-id" placeholder="e.g., ORD-00001" required
+                                class="p-2 rounded-lg bg-slate-700 border border-slate-600 text-white w-full uppercase">
+                        </div>
+
+                        <button type="submit" id="load-order-btn"
+                            class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition duration-200">Load
+                            Order Details</button>
+                    </form>
+
+                    <div id="return-details" class="mt-4 pt-4 border-t border-slate-700 hidden">
+                        <p class="text-sm text-gray-400 mb-3">Order Total: <span id="return-order-total"
+                                class="font-bold text-teal-400"></span> | Customer: <span id="return-customer-name"
+                                class="font-bold text-gray-300"></span></p>
+                        <h4 class="text-lg font-semibold mb-3 text-indigo-300">Items to Return (SKU-wise):</h4>
+                        <div id="return-items-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            <p class="text-center text-gray-500">Load an order to see return items.</p>
+                        </div>
+
+                        <button id="process-return-btn"
+                            class="mt-6 w-full py-3 bg-rose-600 hover:bg-rose-700 rounded-lg text-white font-extrabold transition duration-200">Process
+                            Return & Adjust Stock</button>
+                    </div>
+
+                    <button
+                        onclick="document.getElementById('return-modal').classList.add('hidden'); document.getElementById('return-modal').classList.remove('flex');"
+                        class="mt-4 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-gray-300 font-semibold">Cancel
+                        / Close</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- Configuration & Global State ---
+
+        const STOCK_KEY = 'biztrack_stock';
+        const ORDERS_KEY = 'biztrack_orders';
+        const EXPENSES_KEY = 'biztrack_expenses';
+        const CUSTOMERS_KEY = 'biztrack_customers'; // NEW KEY for customer details
+        const STOCK_ALERT_LEVEL = 5; // Low stock threshold
+
+        let allStockData = [];
+        let allOrdersData = [];
+        let allExpensesData = [];
+        let allCustomerData = []; // NEW ARRAY
+        let orderToReturn = null; // State for return modal
+
+        const isAuthReady = true; // Always ready in a static app
+
+        // Fallback for crypto.randomUUID for older browsers
+        const generateId = () => {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+        };
+
+        // --- Utility Functions ---
+
+        function safeCreateIcons() {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
+        // Helper to load data from localStorage
+        function loadData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error("Error loading data from localStorage for key:", key, e);
+                return [];
+            }
+        }
+
+        // Helper to save data to localStorage
+        function saveData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error("Error saving data to localStorage for key:", key, e);
+                showMessage("Warning: Could not save data locally. Browser storage might be full.");
+            }
+            // Manually re-render after saving (since there are no onSnapshot listeners)
+            if (key === STOCK_KEY) {
+                renderStockTab();
+                renderOrderForm(); // Update product list
+                renderUpdateStockSelect(); // Update stock update form
+            } else if (key === ORDERS_KEY) {
+                renderOrdersList();
+            } else if (key === EXPENSES_KEY) {
+                renderExpensesList();
+            } else if (key === CUSTOMERS_KEY) {
+                renderCustomerSelect();
+            }
+            updateDashboard(); // Always update dashboard after data changes
+        }
+
+        function showMessage(message) {
+            const modal = document.getElementById('message-modal');
+            document.getElementById('modal-message').textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function showConfirmation(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmation-modal');
+                const messageEl = document.getElementById('confirmation-message');
+
+                if (!modal || !messageEl) {
+                    console.error('Confirmation modal elements not found!');
+                    resolve(false);
+                    return;
+                }
+
+                messageEl.textContent = message;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                safeCreateIcons();
+
+                const removeEventListeners = () => {
+                    confirmYesBtn.onclick = null;
+                    confirmNoBtn.onclick = null;
+                    document.removeEventListener('keydown', handleKeyPress);
+                };
+
+                const confirmYesBtn = document.getElementById('confirm-yes');
+                const confirmNoBtn = document.getElementById('confirm-no');
+
+                const handleYes = () => {
+                    removeEventListeners();
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    resolve(true);
+                };
+
+                const handleNo = () => {
+                    removeEventListeners();
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    resolve(false);
+                };
+
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Escape') {
+                        handleNo();
+                    }
+                };
+
+                confirmYesBtn.onclick = handleYes;
+                confirmNoBtn.onclick = handleNo;
+                document.addEventListener('keydown', handleKeyPress);
+            });
+        }
+
+        // Format currency (PKR)
+        const formatter = new Intl.NumberFormat('en-PK', {
+            style: 'currency',
+            currency: 'PKR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        });
+        const formatCurrency = (amount) => formatter.format(amount || 0);
+
+        // --- CSV Export Logic (Remains mostly the same, adapted for new fields) ---
+
+        function convertArrayToCSV(dataArray) {
+            if (dataArray.length === 0) return '';
+
+            // Collect all unique keys for header, favoring new order/customer fields
+            const keys = new Set();
+            dataArray.forEach(obj => {
+                Object.keys(obj).forEach(key => keys.add(key));
+                if (obj.items && Array.isArray(obj.items) && obj.items.length > 0) {
+                    Object.keys(obj.items[0]).forEach(key => keys.add(`item_${key}`));
+                }
+            });
+
+            let headers = Array.from(keys).filter(h =>
+                h !== 'userId' && h !== 'items' && !h.startsWith('item_')
+            ).sort();
+
+            // Add important keys to the front in a readable order
+            const orderPrefix = [
+                'orderId', 'date', 'customerName', 'customerContact', 'customerAddress',
+                'saleChannel', 'totalSale', 'isCredit', 'dueDate',
+                'category', 'amount', 'productId', 'productName', 'unitCost'
+            ];
+            headers = orderPrefix.filter(key => headers.includes(key)).concat(headers.filter(key => !orderPrefix.includes(key)));
+
+            // Add item headers (simplified to show up to 3 items)
+            for (let i = 1; i <= 3; i++) {
+                headers.push(`Item ${i} SKU`, `Item ${i} Name`, `Item ${i} Qty`, `Item ${i} Price`, `Item ${i} Subtotal`);
+            }
+
+            // Unique and final header list
+            headers = [...new Set(headers)].filter(h => h !== 'id' && h !== 'timestamp' && h !== 'isReturn' && h !== 'originalOrderId');
+
+            const headerRow = headers.map(header => `"${header.replace(/"/g, '""')}"`).join(',');
+
+            const contentRows = dataArray.map(obj => {
+                return headers.map(header => {
+                    let value = obj[header];
+
+                    // Special handling for nested Order items
+                    if (header.startsWith('Item ') && obj.items && obj.items.length > 0) {
+                        const parts = header.split(' ');
+                        const itemIndex = parseInt(parts[1]) - 1;
+                        const itemKey = parts.slice(2).join(' '); // Name, Qty, Price, Subtotal etc.
+
+                        if (itemIndex < obj.items.length) {
+                            const item = obj.items[itemIndex];
+                            if (itemKey === 'SKU') value = item.productId;
+                            else if (itemKey === 'Name') value = item.productName;
+                            else if (itemKey === 'Qty') value = item.quantity;
+                            else if (itemKey === 'Price') value = item.unitPrice;
+                            else if (itemKey === 'Subtotal') value = item.subtotal;
+                            else value = '';
+                        } else {
+                            value = '';
+                        }
+                    }
+
+                    if (value === undefined || value === null) {
+                        value = '';
+                    } else if (typeof value === 'object') {
+                        value = JSON.stringify(value).replace(/"/g, '""');
+                    } else if (typeof value === 'string') {
+                        value = value.replace(/"/g, '""');
+                    }
+                    return `"${value}"`;
+                }).join(',');
+            }).join('\n');
+
+            return headerRow + '\n' + contentRows;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showMessage("Your browser does not support downloading files directly.");
+            }
+        }
+
+
+        // --- Tab Management ---
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                button.classList.add('text-gray-400', 'hover:text-white');
+            });
+
+            const activeBtn = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+                activeBtn.classList.remove('text-gray-400', 'hover:text-white');
+            }
+
+            // Specific updates when tabs are opened
+            if (tabId === 'dashboard') {
+                updateDashboard();
+            } else if (tabId === 'stock') {
+                renderUpdateStockSelect();
+            } else if (tabId === 'orders') {
+                renderOrderForm();
+                renderCustomerSelect();
+            }
+            safeCreateIcons();
+        }
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
+        });
+
+        // --- Customer Management Logic ---
+
+        function updateCustomerData(newCustomer) {
+            const existingIndex = allCustomerData.findIndex(c => c.name.toLowerCase() === newCustomer.name.toLowerCase());
+
+            if (existingIndex === -1) {
+                allCustomerData.push({
+                    id: generateId(),
+                    name: newCustomer.name,
+                    address: newCustomer.address,
+                    contact: newCustomer.contact,
+                    channel: newCustomer.channel,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                // Update details for existing customer
+                allCustomerData[existingIndex].address = newCustomer.address;
+                allCustomerData[existingIndex].contact = newCustomer.contact;
+                allCustomerData[existingIndex].channel = newCustomer.channel;
+                allCustomerData[existingIndex].timestamp = new Date().toISOString();
+            }
+            saveData(CUSTOMERS_KEY, allCustomerData);
+        }
+
+        function renderCustomerSelect() {
+            const select = document.getElementById('customer-select');
+            select.innerHTML = '<option value="">-- Select Existing Customer --</option>';
+
+            const sortedCustomers = [...allCustomerData].sort((a, b) => a.name.localeCompare(b.name));
+
+            sortedCustomers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = `${customer.name} (${customer.address || 'No Address'})`;
+                option.dataset.address = customer.address || '';
+                option.dataset.contact = customer.contact || '';
+                option.dataset.channel = customer.channel || '';
+                select.appendChild(option);
+            });
+        }
+
+        // --- App Initialization ---
+
+        function initializeStaticApp() {
+            allStockData = loadData(STOCK_KEY);
+            allOrdersData = loadData(ORDERS_KEY);
+            allExpensesData = loadData(EXPENSES_KEY);
+            allCustomerData = loadData(CUSTOMERS_KEY);
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('tab-content').classList.remove('hidden');
+
+            renderStockTab();
+            renderCustomerSelect(); // Ensure customer list is ready
+            renderOrderForm();
+            renderOrdersList();
+            renderExpensesList();
+            updateDashboard();
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date-end').value = today;
+            document.getElementById('expense-date').value = today;
+
+            // Calculate a starting date (e.g., 3 months ago)
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            document.getElementById('date-start').value = threeMonthsAgo.toISOString().split('T')[0];
+
+            // Setup credit checkbox listener
+            const isCreditCheckbox = document.getElementById('is-credit');
+            const dueDateInput = document.getElementById('due-date');
+            isCreditCheckbox.addEventListener('change', () => {
+                if (isCreditCheckbox.checked) {
+                    dueDateInput.classList.remove('hidden');
+                    const defaultDueDate = new Date();
+                    defaultDueDate.setDate(defaultDueDate.getDate() + 30);
+                    dueDateInput.value = defaultDueDate.toISOString().split('T')[0];
+                } else {
+                    dueDateInput.classList.add('hidden');
+                    dueDateInput.value = '';
+                }
+            });
+
+            // Handle Customer Select/Input interaction
+            const customerSelect = document.getElementById('customer-select');
+            const customerNameInput = document.getElementById('customer-name-input');
+            const customerAddress = document.getElementById('customer-address');
+            const customerContact = document.getElementById('customer-contact');
+            const saleChannel = document.getElementById('sale-channel');
+
+            customerSelect.onchange = (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                if (selectedOption.value) {
+                    // Existing customer selected
+                    customerNameInput.value = selectedOption.textContent.split('(')[0].trim();
+                    customerAddress.value = selectedOption.dataset.address;
+                    customerContact.value = selectedOption.dataset.contact;
+                    saleChannel.value = selectedOption.dataset.channel;
+                    customerNameInput.disabled = true;
+                } else {
+                    // New customer selected or cleared
+                    customerNameInput.value = '';
+                    customerAddress.value = '';
+                    customerContact.value = '';
+                    saleChannel.value = '';
+                    customerNameInput.disabled = false;
+                }
+            };
+
+            // Initial row for the order form
+            const container = document.getElementById('order-items-container');
+            if (container.children.length === 0) addOrderItemRow();
+
+            // Wire up Export Buttons
+            document.getElementById('export-stock-btn').addEventListener('click', () => {
+                const csv = convertArrayToCSV(allStockData);
+                downloadCSV(csv, `ts_stock_${new Date().toISOString().split('T')[0]}.csv`);
+            });
+            document.getElementById('export-orders-btn').addEventListener('click', () => {
+                const csv = convertArrayToCSV(allOrdersData);
+                downloadCSV(csv, `ts_orders_${new Date().toISOString().split('T')[0]}.csv`);
+            });
+            document.getElementById('export-expenses-btn').addEventListener('click', () => {
+                const csv = convertArrayToCSV(allExpensesData);
+                downloadCSV(csv, `ts_expenses_${new Date().toISOString().split('T')[0]}.csv`);
+            });
+
+            // Wire up Return Modal buttons
+            document.getElementById('open-return-modal-btn').addEventListener('click', () => {
+                document.getElementById('return-modal').classList.remove('hidden');
+                document.getElementById('return-modal').classList.add('flex');
+                document.getElementById('return-details').classList.add('hidden');
+                document.getElementById('return-form').reset();
+                orderToReturn = null;
+            });
+            document.getElementById('return-form').addEventListener('submit', loadOrderForReturn);
+            document.getElementById('process-return-btn').addEventListener('click', processReturn);
+
+            initializeStaticApp();
+            switchTab('dashboard');
+        });
+
+        // --- 1. DASHBOARD LOGIC ---
+
+        function filterData(data, dateField) {
+            const startStr = document.getElementById('date-start').value;
+            const endStr = document.getElementById('date-end').value;
+
+            if (!startStr || !endStr) return data;
+
+            const startDate = new Date(startStr + 'T00:00:00');
+            const endDate = new Date(endStr + 'T23:59:59');
+
+            return data.filter(item => {
+                const dateValue = item[dateField];
+                if (!dateValue) return false;
+
+                // Convert to date safely
+                const itemDate = new Date(dateValue.includes('T') ? dateValue : dateValue + 'T00:00:00');
+                return itemDate >= startDate && itemDate <= endDate;
+            });
+        }
+
+        function updateDashboard() {
+            if (!isAuthReady) return;
+
+            const filteredOrders = filterData(allOrdersData, 'date');
+            const filteredExpenses = filterData(allExpensesData, 'date');
+
+            // 1. Calculate Summary (Orders now includes negative return entries)
+            const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalSale, 0);
+            const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            // Compute total cost (COGS)
+            const totalCost = filteredOrders.reduce((sum, order) => {
+                const orderCost = order.items
+                    ? order.items.reduce((subSum, item) => subSum + (item.unitCost * item.quantity), 0)
+                    : 0;
+                return sum + orderCost;
+            }, 0);
+
+            // Compute net profit using new formula
+            const netProfit = totalSales - totalExpenses - totalCost;
+
+            document.getElementById('total-sales').textContent = formatCurrency(totalSales);
+            document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('net-profit').textContent = formatCurrency(netProfit);
+
+            const profitEl = document.getElementById('net-profit');
+            profitEl.classList.remove('text-rose-400', 'text-teal-400', 'text-white');
+            profitEl.classList.add(netProfit >= 0 ? 'text-teal-400' : 'text-rose-400');
+
+            // 2. Outstanding Credit Orders
+            const outstandingCreditOrders = allOrdersData.filter(order => order.isCredit && order.dueDate && !order.isReturn);
+            const creditTableBody = document.getElementById('credit-orders-table-body');
+            creditTableBody.innerHTML = '';
+
+            if (outstandingCreditOrders.length === 0) {
+                creditTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">No outstanding credit orders.</td></tr>';
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                outstandingCreditOrders.forEach(order => {
+                    const dueDateObj = new Date(order.dueDate);
+                    dueDateObj.setHours(0, 0, 0, 0);
+
+                    const timeDiff = dueDateObj.getTime() - today.getTime();
+                    const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                    let daysClass = 'text-green-400';
+                    let daysText = `${daysLeft} days`;
+
+                    if (daysLeft < 0) {
+                        daysClass = 'text-rose-500 font-bold';
+                        daysText = `${Math.abs(daysLeft)} days overdue`;
+                    } else if (daysLeft === 0) {
+                        daysClass = 'text-amber-400 font-bold';
+                        daysText = `DUE TODAY!`;
+                    } else if (daysLeft <= 7) {
+                        daysClass = 'text-amber-400 font-semibold';
+                    }
+
+                    const row = `
+                        <tr class="hover:bg-slate-700 transition duration-100">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-200">${order.customerName || 'N/A'}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">${formatCurrency(order.totalSale)}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${order.dueDate}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm ${daysClass}">${daysText}</td>
+                        </tr>
+                    `;
+                    creditTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+
+            // 3. Date-wise Performance
+            const dailyData = {};
+
+            function getDateKey(item, dateField) { return item[dateField]; }
+
+            filteredOrders.forEach(order => {
+                const dateKey = getDateKey(order, 'date');
+                if (!dailyData[dateKey]) dailyData[dateKey] = { sales: 0, expenses: 0 };
+                dailyData[dateKey].sales += order.totalSale;
+            });
+
+            filteredExpenses.forEach(expense => {
+                const dateKey = getDateKey(expense, 'date');
+                if (!dailyData[dateKey]) dailyData[dateKey] = { sales: 0, expenses: 0 };
+                dailyData[dateKey].expenses += expense.amount;
+            });
+
+            const sortedDates = Object.keys(dailyData).sort().reverse();
+            const tableBody = document.getElementById('dashboard-table-body');
+            tableBody.innerHTML = '';
+
+            if (sortedDates.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">No data found in this date range.</td></tr>';
+                return;
+            }
+
+            sortedDates.forEach(dateKey => {
+                const data = dailyData[dateKey];
+                // Compute total daily cost (COGS)
+                const dailyOrders = filteredOrders.filter(o => o.date === dateKey);
+                const totalCost = dailyOrders.reduce((sum, order) => {
+                    const orderCost = order.items
+                        ? order.items.reduce((subSum, item) => subSum + (item.unitCost * item.quantity), 0)
+                        : 0;
+                    return sum + orderCost;
+                }, 0);
+
+                const profit = data.sales - data.expenses - totalCost;
+                const profitClass = profit >= 0 ? 'text-green-400' : 'text-rose-400';
+
+                const row = `
+                    <tr class="hover:bg-slate-700 transition duration-100">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-200">${dateKey}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-green-400">${formatCurrency(data.sales)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-rose-400">${formatCurrency(data.expenses)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm ${profitClass} font-semibold">${formatCurrency(profit)}</td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        document.getElementById('apply-filter').addEventListener('click', updateDashboard);
+
+
+        // --- 2. STOCK LOGIC ---
+
+        // New: Update Stock Select
+        function renderUpdateStockSelect() {
+            const select = document.getElementById('update-stock-select');
+            const placeholder = select.querySelector('option[value=""]');
+            select.innerHTML = '';
+            if (!placeholder) {
+                select.insertAdjacentHTML('beforeend', '<option value="">-- Select Product to Update --</option>');
+            } else {
+                select.appendChild(placeholder);
+            }
+
+
+            const sortedStock = [...allStockData].sort((a, b) => a.productName.localeCompare(b.productName));
+
+            sortedStock.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = `${item.productName} (SKU: ${item.productId}, Current: ${item.currentStock})`;
+                select.appendChild(option);
+            });
+        }
+
+        function updateCurrentStock(e) {
+            e.preventDefault();
+
+            const productId = document.getElementById('update-stock-select').value;
+            const quantityReceived = parseInt(document.getElementById('update-stock-quantity').value);
+
+            if (!productId || quantityReceived <= 0 || isNaN(quantityReceived)) {
+                showMessage("Please select a product and enter a positive quantity received.");
+                return;
+            }
+
+            const stockItem = allStockData.find(item => item.id === productId);
+
+            if (stockItem) {
+                stockItem.currentStock += quantityReceived;
+                saveData(STOCK_KEY, allStockData);
+                showMessage(`${quantityReceived} units of ${stockItem.productName} received. New Stock: ${stockItem.currentStock}.`);
+                document.getElementById('update-stock-form').reset();
+                renderUpdateStockSelect();
+            } else {
+                showMessage("Error: Product not found.");
+            }
+        }
+        window.updateCurrentStock = updateCurrentStock;
+
+        function renderStockTab() {
+            const tableBody = document.getElementById('stock-list-body');
+            tableBody.innerHTML = '';
+
+            if (allStockData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">No products in stock yet.</td></tr>';
+                return;
+            }
+
+            const sortedStock = [...allStockData].sort((a, b) => a.productName.localeCompare(b.productName));
+            renderUpdateStockSelect(); // Keep the update form selector current
+
+            sortedStock.forEach(item => {
+                const lowStockClass = item.currentStock <= STOCK_ALERT_LEVEL ? 'bg-red-900/50 border border-red-500/50' : '';
+                const stockQtyClass = item.currentStock <= STOCK_ALERT_LEVEL ? 'text-rose-400 font-bold' : 'text-white';
+
+                const row = `
+                    <tr class="hover:bg-slate-700 transition duration-100 ${lowStockClass}">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-indigo-300">${item.productId}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-200">${item.productName}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm ${stockQtyClass}">${item.currentStock}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${formatCurrency(item.unitCost)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <button onclick="deleteStockItem('${item.id}')" class="text-rose-500 hover:text-rose-400 transition duration-200 ml-2">
+                                <i data-lucide="trash-2" class="w-4 h-4 inline-block"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+            safeCreateIcons();
+        }
+
+        function addStockItem(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('stock-id').value.trim().toUpperCase(); // SKU
+            const name = document.getElementById('stock-name').value.trim();
+            const quantity = parseInt(document.getElementById('stock-quantity').value);
+            const cost = parseFloat(document.getElementById('stock-cost').value);
+
+            if (quantity < 0 || cost < 0 || !name || !id) {
+                showMessage("Please ensure Product ID, Name, Quantity, and Cost are valid.");
+                return;
+            }
+
+            if (allStockData.some(item => item.productId.toUpperCase() === id)) {
+                showMessage(`Product ID (SKU) "${id}" already exists. Use the "Update Stock" section instead.`);
+                return;
+            }
+
+            const newStockItem = {
+                id: generateId(),
+                productId: id,
+                productName: name,
+                currentStock: quantity,
+                unitCost: cost,
+                timestamp: new Date().toISOString()
+            };
+
+            allStockData.push(newStockItem);
+            saveData(STOCK_KEY, allStockData);
+
+            showMessage(`Product "${name}" (ID: ${id}) added successfully.`);
+            document.getElementById('add-stock-form').reset();
+        }
+        window.addStockItem = addStockItem;
+
+        function deleteStockItem(id) {
+            const item = allStockData.find(i => i.id === id);
+            if (item && item.currentStock > 0) {
+                showMessage(`Cannot delete "${item.productName}". Stock must be zero first.`);
+                return;
+            }
+
+            const initialLength = allStockData.length;
+            allStockData = allStockData.filter(item => item.id !== id);
+
+            if (allStockData.length < initialLength) {
+                saveData(STOCK_KEY, allStockData);
+                showMessage("Product deleted successfully.");
+            }
+        }
+        window.deleteStockItem = deleteStockItem;
+
+        document.getElementById('add-stock-form').addEventListener('submit', addStockItem);
+
+
+        // --- 3. ORDERS LOGIC (The Twicky Sheet) ---
+
+        function renderOrderForm() {
+            const container = document.getElementById('order-items-container');
+            const totalEl = document.getElementById('order-total');
+            const items = container.querySelectorAll('.order-item-row');
+
+            if (items.length === 0) return;
+
+            let grandTotal = 0;
+            // Only show products with stock > 0
+            const sortedStock = [...allStockData].sort((a, b) => a.productName.localeCompare(b.productName)).filter(item => item.currentStock > 0);
+
+            // Build the options once
+            const stockOptions = sortedStock.map(item =>
+                `<option value="${item.id}" data-stock="${item.currentStock}" data-sku="${item.productId}">${item.productName} (SKU: ${item.productId}, Stock: ${item.currentStock})</option>`
+            ).join('');
+
+            items.forEach((row) => {
+                const selectEl = row.querySelector('.product-select');
+                const quantityInput = row.querySelector('.item-quantity');
+                const priceInput = row.querySelector('.unit-price-input');
+                const subtotalEl = row.querySelector('.item-subtotal');
+
+                const currentProductId = selectEl.value;
+                const currentStockOptions = selectEl.innerHTML;
+
+                // Only update options if they haven't been set or if the selected item is now out of stock
+                if (!currentStockOptions || sortedStock.length !== (selectEl.options.length - 1)) {
+                    selectEl.innerHTML = '<option value="">-- Select Product --</option>' + stockOptions;
+                    selectEl.value = currentProductId;
+                }
+
+                // If selected product is now out of stock, reset the row
+                const selectedStock = allStockData.find(s => s.id === selectEl.value);
+                if (selectedStock && selectedStock.currentStock <= 0) {
+                    selectEl.value = "";
+                    quantityInput.value = 1;
+                    priceInput.value = "";
+                }
+
+
+                const productId = selectEl.value;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const unitPrice = parseFloat(priceInput.value) || 0;
+
+                const stockQty = selectedStock ? selectedStock.currentStock : 0;
+                const subtotal = unitPrice * quantity;
+
+                subtotalEl.textContent = formatCurrency(subtotal);
+
+                grandTotal += subtotal;
+
+                // Simple validation feedback for quantity
+                if (selectedStock && quantity > stockQty) {
+                    quantityInput.classList.add('border-rose-500');
+                    quantityInput.title = `Only ${stockQty} in stock!`;
+                } else {
+                    quantityInput.classList.remove('border-rose-500');
+                    quantityInput.title = '';
+                }
+            });
+
+            totalEl.textContent = formatCurrency(grandTotal);
+            safeCreateIcons();
+        }
+        window.renderOrderForm = renderOrderForm;
+
+        function addOrderItemRow() {
+            const container = document.getElementById('order-items-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'order-item-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700';
+
+            // Only show products with stock > 0
+            const sortedStock = [...allStockData].sort((a, b) => a.productName.localeCompare(b.productName)).filter(item => item.currentStock > 0);
+            const stockOptions = sortedStock.map(item =>
+                `<option value="${item.id}" data-stock="${item.currentStock}" data-sku="${item.productId}">${item.productName} (SKU: ${item.productId}, Stock: ${item.currentStock})</option>`
+            ).join('');
+
+            newRow.innerHTML = `
+                <select class="product-select col-span-1 sm:col-span-4 p-2 rounded-lg bg-slate-700 border border-slate-600 text-white" required>
+                    <option value="">-- Select Product --</option>
+                    ${stockOptions}
+                </select>
+                <input type="number" value="1" min="1" placeholder="Qty" required class="item-quantity col-span-1 sm:col-span-2 p-2 rounded-lg bg-slate-700 border border-slate-600 text-white transition duration-150">
+                <input type="number" placeholder="Unit Price (PKR)" min="0" step="1" required class="unit-price-input col-span-1 sm:col-span-3 p-2 rounded-lg bg-slate-700 border border-slate-600 text-white transition duration-150">
+                <div class="col-span-1 sm:col-span-2 p-2 text-base font-bold text-teal-400 flex items-center justify-end sm:justify-start">
+                    Total: <span class="item-subtotal ml-1">${formatCurrency(0)}</span>
+                </div>
+                <button type="button" class="remove-item-btn col-span-1 sm:col-span-1 flex items-center justify-center text-rose-500 hover:text-rose-400 transition duration-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            `;
+
+            container.appendChild(newRow);
+            safeCreateIcons();
+
+            // Attach event listeners to the new row elements
+            newRow.querySelector('.product-select').addEventListener('change', renderOrderForm);
+            newRow.querySelector('.item-quantity').addEventListener('input', renderOrderForm);
+            newRow.querySelector('.unit-price-input').addEventListener('input', renderOrderForm);
+            newRow.querySelector('.remove-item-btn').addEventListener('click', () => {
+                container.removeChild(newRow);
+                renderOrderForm();
+            });
+
+            renderOrderForm();
+        }
+
+        document.getElementById('add-order-item-btn').addEventListener('click', addOrderItemRow);
+
+        function generateOrderId() {
+            const prefix = "ORD-";
+            // Find the last numeric ID used (handles RET- and ORD-)
+            const lastNumericId = allOrdersData.reduce((max, order) => {
+                const currentNum = parseInt((order.orderId || 'ORD-0').replace(/RET-|ORD-/i, ''));
+                return Math.max(max, currentNum);
+            }, 0);
+
+            const newNumber = (lastNumericId + 1).toString().padStart(5, '0');
+            return prefix + newNumber;
+        }
+
+
+        async function recordOrder() {
+            if (!isAuthReady) return showMessage("App is not ready.");
+
+            const container = document.getElementById('order-items-container');
+            const items = container.querySelectorAll('.order-item-row');
+            const orderDetails = [];
+            let totalSale = 0;
+            const stockUpdates = [];
+
+            const customerName = document.getElementById('customer-name-input').value.trim();
+            const customerAddress = document.getElementById('customer-address').value.trim();
+            const customerContact = document.getElementById('customer-contact').value.trim();
+            const saleChannel = document.getElementById('sale-channel').value;
+            const isCredit = document.getElementById('is-credit').checked;
+            const dueDate = document.getElementById('due-date').value;
+
+            if (!customerName || !saleChannel) {
+                showMessage("Customer Name and Sales Channel are required.");
+                return;
+            }
+
+            if (isCredit && !dueDate) {
+                showMessage("Please select a Due Date for credit sales.");
+                return;
+            }
+
+            for (const row of items) {
+                const productId = row.querySelector('.product-select').value;
+                const quantity = parseInt(row.querySelector('.item-quantity').value);
+                const unitPrice = parseFloat(row.querySelector('.unit-price-input').value);
+
+                if (!productId || quantity <= 0 || unitPrice <= 0) {
+                    if (items.length === 1 && !productId) continue;
+                    if (items.length > 1 && (!productId && quantity === 0)) continue;
+                    showMessage("Please select a product, and ensure quantity and unit price are positive for all sale items.");
+                    return;
+                }
+
+                const stockItem = allStockData.find(s => s.id === productId);
+
+                if (!stockItem) {
+                    showMessage(`Product not found in stock data.`);
+                    return;
+                }
+
+                if (stockItem.currentStock < quantity) {
+                    showMessage(`Not enough stock for ${stockItem.productName}. Available: ${stockItem.currentStock}, Requested: ${quantity}`);
+                    return;
+                }
+
+                const lineTotal = unitPrice * quantity;
+                totalSale += lineTotal;
+
+                orderDetails.push({
+                    productId: stockItem.productId,
+                    productName: stockItem.productName,
+                    quantity: quantity,
+                    unitPrice: unitPrice,
+                    unitCost: stockItem.unitCost,
+                    subtotal: lineTotal
+                });
+
+                stockUpdates.push({
+                    id: productId,
+                    newStock: stockItem.currentStock - quantity,
+                    productName: stockItem.productName
+                });
+            }
+
+            if (orderDetails.length === 0) {
+                showMessage("No valid items to record in the sale.");
+                return;
+            }
+
+            // 1. Update Customer Data (new or existing)
+            updateCustomerData({
+                name: customerName,
+                address: customerAddress,
+                contact: customerContact,
+                channel: saleChannel
+            });
+
+            // 2. Update Stock Array
+            stockUpdates.forEach(update => {
+                const stockIndex = allStockData.findIndex(s => s.id === update.id);
+                if (stockIndex !== -1) {
+                    allStockData[stockIndex].currentStock = update.newStock;
+                }
+            });
+            saveData(STOCK_KEY, allStockData);
+
+            // 3. Record Order
+            const newOrder = {
+                id: generateId(),
+                orderId: generateOrderId(),
+                date: new Date().toISOString().split('T')[0],
+                totalSale: totalSale,
+                customerName: customerName,
+                customerAddress: customerAddress,
+                customerContact: customerContact,
+                saleChannel: saleChannel,
+                isCredit: isCredit,
+                dueDate: isCredit ? dueDate : null,
+                items: orderDetails,
+                timestamp: new Date().toISOString()
+            };
+            allOrdersData.unshift(newOrder);
+            saveData(ORDERS_KEY, allOrdersData);
+
+            showMessage(`Sale recorded successfully! Order ID: ${newOrder.orderId}. Total: ${formatCurrency(totalSale)}. Stock updated.`);
+
+            // Reset the form
+            document.getElementById('customer-name-input').value = '';
+            document.getElementById('customer-address').value = '';
+            document.getElementById('customer-contact').value = '';
+            document.getElementById('sale-channel').value = '';
+            document.getElementById('is-credit').checked = false;
+            document.getElementById('due-date').classList.add('hidden');
+            document.getElementById('customer-select').value = '';
+            document.getElementById('customer-name-input').disabled = false;
+
+            document.getElementById('order-items-container').innerHTML = '';
+            addOrderItemRow();
+        }
+        document.getElementById('record-order-btn').addEventListener('click', recordOrder);
+
+        function renderOrdersList() {
+            const tableBody = document.getElementById('orders-list-body');
+            tableBody.innerHTML = '';
+
+            if (allOrdersData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">No sales recorded yet.</td></tr>';
+                return;
+            }
+
+            const displayOrders = allOrdersData.filter(o => !o.isReturn);
+            const sortedOrders = [...displayOrders].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            sortedOrders.slice(0, 10).forEach(order => {
+                const statusText = order.isCredit ? (order.dueDate ? `Credit (Due ${order.dueDate})` : 'Credit') : 'Paid';
+                const statusClass = order.isCredit ? 'text-amber-400' : 'text-green-400';
+
+                const row = `
+                    <tr class="hover:bg-slate-700 transition duration-100">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-indigo-300">${order.orderId || 'N/A'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-200">${order.date}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${order.customerName || 'Walk-in'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400">${order.customerContact || 'N/A'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-green-400">${formatCurrency(order.totalSale)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm ${statusClass}">${statusText}</td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+            safeCreateIcons();
+        }
+
+        async function deleteLastMonthOrders() {
+            console.log('Delete button clicked!');
+            const isConfirmed = await showConfirmation("Are you sure you want to delete all last month's orders? This action cannot be undone.");
+            console.log('User confirmed:', isConfirmed);
+            if (!isConfirmed) {
+                console.log('User cancelled deletion');
+                return;
+            }
+
+            try {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                const firstDayOfLastMonth = new Date(currentYear, currentMonth - 1, 1);
+                const lastDayOfLastMonth = new Date(currentYear, currentMonth, 0);
+                const lastMonthStart = firstDayOfLastMonth.toISOString().split('T')[0];
+                const lastMonthEnd = lastDayOfLastMonth.toISOString().split('T')[0];
+
+                console.log('Deleting orders from:', lastMonthStart, 'to', lastMonthEnd);
+                const ordersToKeep = allOrdersData.filter(order => {
+                    if (!order.date) return true;
+                    const orderDate = order.date;
+                    return orderDate < lastMonthStart || orderDate > lastDayOfLastMonth;
+                });
+
+                const deletedCount = allOrdersData.length - ordersToKeep.length;
+
+                if (deletedCount === 0) {
+                    showMessage("No orders found from last month to delete.");
+                    return;
+                }
+
+                // Update the orders data
+                allOrdersData = ordersToKeep;
+
+                // Save to localStorage
+                saveData(ORDERS_KEY, allOrdersData);
+
+                // Update UI
+                updateDashboard();
+                renderOrdersList();
+
+                // Reset current order form
+                document.getElementById('order-total').textContent = formatCurrency(0);
+
+                showMessage(`Last month's orders deleted successfully. ${deletedCount} order(s) removed.`);
+
+            } catch (error) {
+                console.error('Error deleting last month orders:', error);
+                showMessage("An error occurred while deleting orders. Please try again.");
+            }
+        }
+
+        document.getElementById('delete-order-btn').addEventListener('click', deleteLastMonthOrders);
+
+
+        // --- 3.1 Return Order Logic ---
+
+        function loadOrderForReturn(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('return-order-id').value.trim().toUpperCase();
+            orderToReturn = allOrdersData.find(o => o.orderId === orderId && !o.isReturn);
+
+            const detailsDiv = document.getElementById('return-details');
+            const itemsList = document.getElementById('return-items-list');
+
+            itemsList.innerHTML = '';
+            detailsDiv.classList.add('hidden');
+
+            if (!orderToReturn) {
+                showMessage(`Active Order ID "${orderId}" not found in sales history.`);
+                return;
+            }
+
+            document.getElementById('return-order-total').textContent = formatCurrency(orderToReturn.totalSale);
+            document.getElementById('return-customer-name').textContent = orderToReturn.customerName;
+            detailsDiv.classList.remove('hidden');
+
+            orderToReturn.items.forEach((item, index) => {
+                const itemRow = document.createElement('div');
+                itemRow.className = 'flex justify-between items-center bg-slate-800 p-3 rounded-lg border border-slate-700';
+                itemRow.innerHTML = `
+                    <div class="flex-grow">
+                        <p class="text-sm font-semibold text-gray-200">${item.productName} (SKU: ${item.productId})</p>
+                        <p class="text-xs text-gray-400">Sold Qty: ${item.quantity} @ ${formatCurrency(item.unitPrice)}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs text-gray-300 whitespace-nowrap">Return Qty:</label>
+                        <input type="number" data-item-index="${index}" value="0" min="0" max="${item.quantity}" class="return-quantity-input p-1 w-16 text-center rounded-lg bg-slate-700 border border-slate-600 text-white">
+                    </div>
+                `;
+                itemsList.appendChild(itemRow);
+            });
+        }
+
+        function processReturn() {
+            if (!orderToReturn) {
+                showMessage("Please load an order first.");
+                return;
+            }
+
+            const returnInputs = document.querySelectorAll('.return-quantity-input');
+            const itemsToReturn = [];
+            let totalReturnAmount = 0;
+            let anyReturn = false;
+
+            for (const input of returnInputs) {
+                const index = parseInt(input.dataset.item - index);
+                const returnQty = parseInt(input.value) || 0;
+                const originalItem = orderToReturn.items[index];
+
+                if (returnQty > 0) {
+                    anyReturn = true;
+                    if (returnQty > originalItem.quantity) {
+                        showMessage(`Return quantity for ${originalItem.productName} exceeds original sale quantity.`);
+                        return;
+                    }
+
+                    const returnAmount = originalItem.unitPrice * returnQty;
+                    totalReturnAmount += returnAmount;
+
+                    itemsToReturn.push({
+                        ...originalItem,
+                        returnQuantity: returnQty,
+                        returnAmount: returnAmount
+                    });
+                }
+            }
+
+            if (!anyReturn) {
+                showMessage("No return quantity specified.");
+                return;
+            }
+
+            // 1. Adjust Stock
+            itemsToReturn.forEach(item => {
+                const stockItem = allStockData.find(s => s.productId === item.productId);
+                if (stockItem) {
+                    stockItem.currentStock += item.returnQuantity;
+                } else {
+                    console.warn(`Stock item with productId ${item.productId} not found for return adjustment.`);
+                }
+            });
+            saveData(STOCK_KEY, allStockData);
+
+            // 2. Log Return as a negative sale for reporting accuracy
+            const returnOrder = {
+                id: generateId(),
+                orderId: `RET-${orderToReturn.orderId}`,
+                date: new Date().toISOString().split('T')[0],
+                totalSale: -totalReturnAmount,
+                customerName: orderToReturn.customerName,
+                customerAddress: orderToReturn.customerAddress,
+                customerContact: orderToReturn.customerContact,
+                saleChannel: orderToReturn.saleChannel,
+                isCredit: false,
+                dueDate: null,
+                items: itemsToReturn.map(item => ({ ...item, quantity: -item.returnQuantity, subtotal: -item.returnAmount })),
+                isReturn: true,
+                originalOrderId: orderToReturn.orderId,
+                timestamp: new Date().toISOString()
+            };
+
+            allOrdersData.unshift(returnOrder);
+            saveData(ORDERS_KEY, allOrdersData);
+
+            document.getElementById('return-modal').classList.add('hidden');
+            document.getElementById('return-modal').classList.remove('flex');
+            showMessage(`Return Processed! Total Refund/Adjustment: ${formatCurrency(totalReturnAmount)}. Stock adjusted.`);
+            orderToReturn = null;
+        }
+
+        // --- 4. EXPENSES LOGIC ---
+
+        function renderExpensesList() {
+            const tableBody = document.getElementById('expenses-list-body');
+            tableBody.innerHTML = '';
+
+            if (allExpensesData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">No expenses recorded yet.</td></tr>';
+                return;
+            }
+
+            // Sort expenses by date/timestamp (newest first)
+            const sortedExpenses = [...allExpensesData].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            sortedExpenses.slice(0, 10).forEach(expense => {
+                const row = `
+                    <tr class="hover:bg-slate-700 transition duration-100">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-200">${expense.date}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300">${expense.category}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-rose-400">${formatCurrency(expense.amount)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <button onclick="deleteExpense('${expense.id}')" class="text-rose-500 hover:text-rose-400 transition duration-200 ml-2">
+                                <i data-lucide="trash-2" class="w-4 h-4 inline-block"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+            safeCreateIcons();
+        }
+
+        function addExpense(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('expense-date').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const category = document.getElementById('expense-category').value.trim();
+
+            if (!date || amount <= 0 || !category || isNaN(amount)) {
+                showMessage("Please fill in all expense details correctly.");
+                return;
+            }
+
+            const newExpense = {
+                id: generateId(),
+                date: date,
+                amount: amount,
+                category: category,
+                timestamp: new Date().toISOString()
+            };
+
+            allExpensesData.unshift(newExpense);
+            saveData(EXPENSES_KEY, allExpensesData);
+
+            showMessage(`Expense of ${formatCurrency(amount)} recorded for ${category}.`);
+            document.getElementById('add-expense-form').reset();
+        }
+        document.getElementById('add-expense-form').addEventListener('submit', addExpense);
+
+        function deleteExpense(id) {
+            const initialLength = allExpensesData.length;
+            allExpensesData = allExpensesData.filter(item => item.id !== id);
+
+            if (allExpensesData.length < initialLength) {
+                saveData(EXPENSES_KEY, allExpensesData);
+                showMessage("Expense deleted successfully.");
+            }
+        }
+        window.deleteExpense = deleteExpense;
+    </script>
+</body>
+
+</html>
